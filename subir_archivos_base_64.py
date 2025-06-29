@@ -1,5 +1,6 @@
 import base64
 import boto3
+import json
 
 def upload_base64_to_s3(s3_bucket_name, s3_file_key, base64_str):
     """
@@ -16,29 +17,40 @@ def upload_base64_to_s3(s3_bucket_name, s3_file_key, base64_str):
 
 def lambda_handler(event, context):
     try:
+        # Parsear el body si viene como string
+        if isinstance(event.get("body"), str):
+            body = json.loads(event["body"])
+        elif isinstance(event.get("body"), dict):
+            body = event["body"]
+        else:
+            body = event  # fallback (ejecución local)
+
         # Entrada
-        bucket = event.get("bucket")
-        directorio = event.get("directorio", "")
-        nombre_archivo = event.get("nombre_archivo")
-        contenido_base64 = event.get("contenido_base64")
+        bucket = body.get("bucket")
+        directorio = body.get("directorio", "")
+        nombre_archivo = body.get("nombre_archivo")
+        contenido_base64 = body.get("contenido_base64")
 
+        # Validación de campos obligatorios
         if not bucket or not nombre_archivo or not contenido_base64:
-            raise ValueError("Faltan datos obligatorios: bucket, nombre_archivo o contenido_base64.")
+            return {
+                'statusCode': 400,
+                'mensaje': "Faltan campos requeridos: 'bucket', 'nombre_archivo' o 'contenido_base64'."
+            }
 
-        # Aseguramos que el "directorio" termine en /
+        # Asegurar que el directorio termine con "/"
         if directorio and not directorio.endswith("/"):
             directorio += "/"
 
+        # Clave final para S3
         clave_s3 = directorio + nombre_archivo
 
-        # Subimos el archivo
+        # Subida
         bucket_name, key = upload_base64_to_s3(bucket, clave_s3, contenido_base64)
 
-        # Salida
-        mensaje = f"✅ Archivo '{nombre_archivo}' subido a '{key}' en el bucket '{bucket_name}'."
         return {
             'statusCode': 200,
-            'mensaje': mensaje
+            'mensaje': f"✅ Archivo '{nombre_archivo}' subido correctamente a '{key}' en el bucket '{bucket_name}'."
         }
 
     except Exception as e:
