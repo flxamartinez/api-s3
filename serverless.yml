@@ -38,8 +38,8 @@ functions:
           cors: true
           integration: lambda
 
-  crear_directorio_en_bucket:
-    handler: crear_directorio_en_bucket.lambda_handler
+  crear_directorio:
+    handler: crear_directorio.lambda_handler
     events:
       - http:
           path: /s3/bucket/crear-directorio
@@ -47,10 +47,10 @@ functions:
           cors: true
           integration: lambda
 
-  subir_archivo_base64:
-    handler: subir_archivo_base64.lambda_handler
+  subir_archivo_base_64:
+    handler: subir_archivos_base_64.lambda_handler
     memorySize: 512
-    timeout: 60  # Aumentamos tiempo por posibles archivos grandes
+    timeout: 60
     events:
       - http:
           path: /s3/bucket/subir-archivo
